@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Posit</title>
+    <link rel="icon" type="image/svg+xml" href="assets/posit-icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="posit-shell" data-theme="cream">
+      <header class="topbar">
+        <div class="brand-area" title="Arrastra para mover">
+          <div class="brand-mark" aria-hidden="true"><img src="assets/posit-icon.svg" alt="" /></div>
+          <div class="brand-copy">
+            <span class="eyebrow">nota rápida</span>
+            <span class="brand-name">POSIT</span>
+          </div>
+        </div>
+
+        <div class="window-actions" aria-label="Controles de ventana">
+          <button id="more-actions" class="icon-button more-button" type="button" aria-label="Más opciones" aria-expanded="false" title="Más opciones">
+            <span class="more-dots" aria-hidden="true">•••</span>
+          </button>
+          <button class="icon-button minimize-button" aria-label="Minimizar" title="Minimizar">
+            <span></span>
+          </button>
+          <button class="icon-button close-button" aria-label="Cerrar" title="Cerrar">
+            <span></span>
+          </button>
+        </div>
+      </header>
+
+      <div id="font-menu" class="font-menu" hidden>
+        <div class="font-menu-heading">
+          <span>Tamaño de fuente</span>
+          <strong id="font-size-value">16 px</strong>
+        </div>
+        <input id="font-size-range" class="font-size-range" type="range" min="12" max="24" step="1" value="16" aria-label="Tamaño de fuente" />
+        <div class="font-size-hints" aria-hidden="true"><span>A</span><span>A</span><span>A</span></div>
+        <button id="new-posit" class="new-posit-action" type="button">
+          <span class="new-posit-plus" aria-hidden="true">+</span>
+          <span>Crear nuevo posit</span>
+        </button>
+      </div>
+
+      <section class="note-content">
+        <input id="note-title" class="note-title" type="text" maxlength="60" placeholder="Título de la nota" aria-label="Título de la nota" />
+        <textarea id="note-body" class="note-body" maxlength="5000" placeholder="Escribe algo para no olvidarlo..." aria-label="Contenido de la nota"></textarea>
+      </section>
+
+      <footer class="note-footer">
+        <div class="footer-left">
+          <span class="save-state"><span class="save-dot"></span><span id="save-label">Guardado</span></span>
+        </div>
+
+        <div class="footer-actions">
+          <div class="theme-picker" aria-label="Elegir color de la nota">
+            <button class="theme-dot theme-dot-cream is-selected" type="button" data-theme="cream" aria-label="Color crema" aria-pressed="true"></button>
+            <button class="theme-dot theme-dot-lavender" type="button" data-theme="lavender" aria-label="Color lavanda" aria-pressed="false"></button>
+            <button class="theme-dot theme-dot-peach" type="button" data-theme="peach" aria-label="Color durazno" aria-pressed="false"></button>
+          </div>
+
+          <button id="open-note" class="save-control" type="button" title="Abrir un archivo de texto">
+            <span class="save-icon" aria-hidden="true">↗</span>
+            <span>Abrir</span>
+          </button>
+
+          <button id="save-note" class="save-control" type="button" title="Guardar esta nota en un archivo">
+            <span class="save-icon" aria-hidden="true">↥</span>
+            <span>Guardar</span>
+          </button>
+
+          <button id="pin-toggle" class="pin-control is-active" type="button" aria-pressed="true" title="Activar o desactivar siempre arriba">
+            <span class="pin-icon" aria-hidden="true">⌖</span>
+            <span>Siempre arriba</span>
+          </button>
+        </div>
+      </footer>
+
+      <div class="resize-handle resize-n" data-resize="n" aria-hidden="true"></div>
+      <div class="resize-handle resize-ne" data-resize="ne" aria-hidden="true"></div>
+      <div class="resize-handle resize-e" data-resize="e" aria-hidden="true"></div>
+      <div class="resize-handle resize-se" data-resize="se" aria-hidden="true"></div>
+      <div class="resize-handle resize-s" data-resize="s" aria-hidden="true"></div>
+      <div class="resize-handle resize-sw" data-resize="sw" aria-hidden="true"></div>
+      <div class="resize-handle resize-w" data-resize="w" aria-hidden="true"></div>
+      <div class="resize-handle resize-nw" data-resize="nw" aria-hidden="true"></div>
+    </main>
+    <script src="renderer.js"></script>
+  </body>
+</html>

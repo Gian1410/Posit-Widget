@@ -1,0 +1,16 @@
+{
+  "name": "posit-widget",
+  "version": "0.1.0",
+  "description": "Widget de notas minimalista para Windows.",
+  "main": "main.js",
+  "author": "Proyecto Posit",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "check": "node --check main.js"
+  },
+  "devDependencies": {
+    "electron": "^38.2.0"
+  }
+}
