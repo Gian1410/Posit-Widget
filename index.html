@@ -12,10 +12,6 @@
       <header class="topbar">
         <div class="brand-area" title="Arrastra para mover">
           <div class="brand-mark" aria-hidden="true"><img src="assets/posit-icon.svg" alt="" /></div>
-          <div class="brand-copy">
-            <span class="eyebrow">nota rápida</span>
-            <span class="brand-name">POSIT</span>
-          </div>
         </div>
 
         <div class="window-actions" aria-label="Controles de ventana">
@@ -36,7 +32,7 @@
           <span>Tamaño de fuente</span>
           <strong id="font-size-value">16 px</strong>
         </div>
-        <input id="font-size-range" class="font-size-range" type="range" min="12" max="24" step="1" value="16" aria-label="Tamaño de fuente" />
+        <input id="font-size-range" class="font-size-range" type="range" min="8" max="24" step="1" value="16" aria-label="Tamaño de fuente" />
         <div class="font-size-hints" aria-hidden="true"><span>A</span><span>A</span><span>A</span></div>
         <button id="new-posit" class="new-posit-action" type="button">
           <span class="new-posit-plus" aria-hidden="true">+</span>
@@ -62,12 +58,19 @@
           </div>
 
           <button id="open-note" class="save-control" type="button" title="Abrir un archivo de texto">
-            <span class="save-icon" aria-hidden="true">↗</span>
+            <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6.5h6l2 2h10v10.5H3V6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M3 9h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12 14v-5m0 0-2 2m2-2 2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             <span>Abrir</span>
           </button>
 
           <button id="save-note" class="save-control" type="button" title="Guardar esta nota en un archivo">
-            <span class="save-icon" aria-hidden="true">↥</span>
+            <svg class="action-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+              <path d="M5 3h11l3 3v15H5V3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M8 3v6h8V3M8 16h8v5H8v-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
             <span>Guardar</span>
           </button>
 

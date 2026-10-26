@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('positWindow', {
   getBounds: () => ipcRenderer.invoke('window:get-bounds'),
   setBounds: (bounds) => ipcRenderer.invoke('window:set-bounds', bounds),
   saveNoteToFile: (note) => ipcRenderer.invoke('note:save-to-file', note),
+  saveNoteToPath: (note) => ipcRenderer.invoke('note:write-to-path', note),
   openNoteFromFile: () => ipcRenderer.invoke('note:open-from-file')
 });

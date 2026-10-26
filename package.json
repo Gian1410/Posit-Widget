@@ -8,9 +8,46 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "check": "node --check main.js"
+    "check": "node --check main.js",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:portable": "electron-builder --win portable --x64 --publish never"
   },
   "devDependencies": {
-    "electron": "^38.2.0"
+    "electron": "^38.2.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.proyectoposit.posit",
+    "productName": "Posit",
+    "artifactName": "Posit-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist{,/**}",
+      "!README.md",
+      "!INICIAR_POSIT.cmd"
+    ],
+    "win": {
+      "icon": "assets/posit-icon.ico",
+      "signAndEditExecutable": true,
+      "signExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Posit"
+    }
   }
 }

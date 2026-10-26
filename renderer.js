@@ -18,6 +18,8 @@ const closeButton = document.querySelector('.close-button');
 const noteWindowId = (window.location.hash.slice(1) || 'default').replace(/[^a-zA-Z0-9_-]/g, '_');
 const isNewNote = noteWindowId.startsWith('new-');
 const STORAGE_KEY = `posit-note-v1-${noteWindowId}`;
+let activeFilePath = null;
+let autoSaveTimer = null;
 
 function loadNote() {
   if (isNewNote) {
@@ -63,7 +65,7 @@ function applyTheme(theme = 'cream') {
 }
 
 function applyFontSize(size = 16) {
-  const nextSize = Math.max(12, Math.min(24, Number(size) || 16));
+  const nextSize = Math.max(8, Math.min(24, Number(size) || 16));
   const titleSize = nextSize * 1.75;
   document.documentElement.style.setProperty('--note-font-size', `${nextSize}px`);
   document.documentElement.style.setProperty('--note-title-font-size', `${titleSize}px`);
@@ -78,10 +80,28 @@ function updateTextScale() {
   document.documentElement.style.setProperty('--note-scale', scale.toFixed(3));
 }
 
-function markSaving() {
-  saveLabel.textContent = 'guardando...';
-  window.clearTimeout(markSaving.timeout);
-  markSaving.timeout = window.setTimeout(saveNote, 260);
+async function saveToActiveFile() {
+  if (!activeFilePath) return;
+
+  try {
+    await window.positWindow.saveNoteToPath({
+      filePath: activeFilePath,
+      title: titleInput.value,
+      body: bodyInput.value
+    });
+    saveLabel.textContent = 'Guardado';
+  } catch {
+    saveLabel.textContent = 'No se pudo guardar';
+  }
+}
+
+function queueAutoSave() {
+  saveLabel.textContent = 'Guardando...';
+  window.clearTimeout(autoSaveTimer);
+  autoSaveTimer = window.setTimeout(async () => {
+    saveNote();
+    await saveToActiveFile();
+  }, 260);
 }
 
 function updatePinState(isActive) {
@@ -90,8 +110,8 @@ function updatePinState(isActive) {
   pinToggle.title = isActive ? 'Desactivar siempre arriba' : 'Activar siempre arriba';
 }
 
-titleInput.addEventListener('input', markSaving);
-bodyInput.addEventListener('input', markSaving);
+titleInput.addEventListener('input', queueAutoSave);
+bodyInput.addEventListener('input', queueAutoSave);
 
 pinToggle.addEventListener('click', async () => {
   const isActive = pinToggle.classList.contains('is-active');
@@ -116,7 +136,7 @@ fontMenu.addEventListener('pointerdown', (event) => event.stopPropagation());
 
 fontSizeRange.addEventListener('input', () => {
   applyFontSize(fontSizeRange.value);
-  saveNote();
+  queueAutoSave();
 });
 
 document.addEventListener('pointerdown', (event) => {
@@ -136,7 +156,7 @@ document.addEventListener('keydown', (event) => {
 themeButtons.forEach((button) => {
   button.addEventListener('click', () => {
     applyTheme(button.dataset.theme);
-    saveNote();
+    queueAutoSave();
   });
 });
 
@@ -154,10 +174,12 @@ saveButton.addEventListener('click', async () => {
     if (result.canceled) {
       saveLabel.textContent = 'Guardado';
     } else {
-      saveLabel.textContent = `guardado: ${result.fileName}`;
+      activeFilePath = result.filePath;
+      saveNote();
+      saveLabel.textContent = 'Guardado';
     }
   } catch {
-    saveLabel.textContent = 'no se pudo guardar';
+    saveLabel.textContent = 'No se pudo guardar';
   } finally {
     saveButton.disabled = false;
   }
@@ -173,13 +195,14 @@ openButton.addEventListener('click', async () => {
     if (result.canceled) {
       saveLabel.textContent = 'Guardado';
     } else {
+      activeFilePath = result.filePath;
       titleInput.value = result.title;
       bodyInput.value = result.body;
       saveNote();
-      saveLabel.textContent = `abierto: ${result.fileName}`;
+      saveLabel.textContent = 'Guardado';
     }
   } catch {
-    saveLabel.textContent = 'no se pudo abrir';
+    saveLabel.textContent = 'No se pudo abrir';
   } finally {
     openButton.disabled = false;
   }

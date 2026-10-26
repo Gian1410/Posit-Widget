@@ -10,6 +10,15 @@ function getWindowFromEvent(event) {
   return BrowserWindow.fromWebContents(event.sender) || mainWindow;
 }
 
+async function writeNoteFile(filePath, payload = {}) {
+  const normalizedPath = filePath.toLowerCase().endsWith('.txt') ? filePath : `${filePath}.txt`;
+  const title = String(payload.title || '').trim();
+  const body = String(payload.body || '');
+  const contents = `${title ? `${title}\n\n` : ''}${body}`;
+  await fs.writeFile(normalizedPath, contents, 'utf8');
+  return normalizedPath;
+}
+
 function createWindow({ newNote = false } = {}) {
   const { workArea } = screen.getPrimaryDisplay();
   const width = 380;
@@ -18,7 +27,7 @@ function createWindow({ newNote = false } = {}) {
   const x = Math.max(workArea.x + workArea.width - width - 28 - offset, workArea.x);
   const y = Math.max(workArea.y + 28 + offset, workArea.y);
   const windowId = newNote ? `new-${Date.now()}-${nextWindowId++}` : 'default';
-  const windowPath = path.join(__dirname, 'assets', 'posit-icon.svg');
+  const windowPath = path.join(__dirname, 'assets', 'posit-icon.ico');
 
   const positWindow = new BrowserWindow({
     width,
@@ -139,16 +148,18 @@ ipcMain.handle('note:save-to-file', async (event, payload = {}) => {
   const filePath = result.filePath.toLowerCase().endsWith('.txt')
     ? result.filePath
     : `${result.filePath}.txt`;
-  const title = String(payload.title || '').trim();
-  const body = String(payload.body || '');
-  const contents = `${title ? `${title}\n\n` : ''}${body}`;
-
-  await fs.writeFile(filePath, contents, 'utf8');
+  const savedPath = await writeNoteFile(filePath, payload);
   return {
     canceled: false,
-    filePath,
-    fileName: path.basename(filePath)
+    filePath: savedPath,
+    fileName: path.basename(savedPath)
   };
+});
+
+ipcMain.handle('note:write-to-path', async (_event, payload = {}) => {
+  if (!payload.filePath) return { canceled: true };
+  const savedPath = await writeNoteFile(String(payload.filePath), payload);
+  return { canceled: false, filePath: savedPath, fileName: path.basename(savedPath) };
 });
 
 ipcMain.handle('note:open-from-file', async (event) => {
@@ -173,6 +184,7 @@ ipcMain.handle('note:open-from-file', async (event) => {
 
   return {
     canceled: false,
+    filePath,
     fileName: path.basename(filePath),
     title,
     body
