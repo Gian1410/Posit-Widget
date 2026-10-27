@@ -29,11 +29,26 @@
 
       <div id="font-menu" class="font-menu" hidden>
         <div class="font-menu-heading">
-          <span>Tamaño de fuente</span>
+          <span>Tamaño de toda la nota</span>
           <strong id="font-size-value">16 px</strong>
         </div>
         <input id="font-size-range" class="font-size-range" type="range" min="8" max="24" step="1" value="16" aria-label="Tamaño de fuente" />
         <div class="font-size-hints" aria-hidden="true"><span>A</span><span>A</span><span>A</span></div>
+        <div class="selection-tools">
+          <span class="selection-label">Texto seleccionado</span>
+          <div class="selection-actions">
+            <button class="format-button format-bold" type="button" data-command="bold" title="Negrita"><strong>B</strong></button>
+            <button class="format-button format-italic" type="button" data-command="italic" title="Cursiva"><em>I</em></button>
+            <button class="format-button format-list" type="button" data-command="insertUnorderedList" title="Viñetas">•</button>
+            <select id="selection-size" class="selection-size" aria-label="Tamaño del texto seleccionado" title="Tamaño del texto seleccionado">
+              <option value="">Tamaño</option>
+              <option value="2">Pequeño</option>
+              <option value="3">Normal</option>
+              <option value="5">Grande</option>
+              <option value="6">Muy grande</option>
+            </select>
+          </div>
+        </div>
         <button id="new-posit" class="new-posit-action" type="button">
           <span class="new-posit-plus" aria-hidden="true">+</span>
           <span>Crear nuevo posit</span>
@@ -42,7 +57,7 @@
 
       <section class="note-content">
         <input id="note-title" class="note-title" type="text" maxlength="60" placeholder="Título de la nota" aria-label="Título de la nota" />
-        <textarea id="note-body" class="note-body" maxlength="5000" placeholder="Escribe algo para no olvidarlo..." aria-label="Contenido de la nota"></textarea>
+        <div id="note-body" class="note-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribe algo para no olvidarlo..." aria-label="Contenido de la nota"></div>
       </section>
 
       <footer class="note-footer">

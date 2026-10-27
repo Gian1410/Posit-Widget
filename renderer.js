@@ -9,6 +9,8 @@ const fontMenu = document.querySelector('#font-menu');
 const newPositButton = document.querySelector('#new-posit');
 const fontSizeRange = document.querySelector('#font-size-range');
 const fontSizeValue = document.querySelector('#font-size-value');
+const formatButtons = document.querySelectorAll('.format-button');
+const selectionSize = document.querySelector('#selection-size');
 const positShell = document.querySelector('.posit-shell');
 const themeButtons = document.querySelectorAll('.theme-dot');
 const resizeHandles = document.querySelectorAll('.resize-handle');
@@ -20,11 +22,48 @@ const isNewNote = noteWindowId.startsWith('new-');
 const STORAGE_KEY = `posit-note-v1-${noteWindowId}`;
 let activeFilePath = null;
 let autoSaveTimer = null;
+let savedSelection = null;
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/\r?\n/g, '<br>');
+}
+
+function saveCurrentSelection() {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+  const range = selection.getRangeAt(0);
+  if (bodyInput.contains(range.commonAncestorContainer)) {
+    savedSelection = range.cloneRange();
+  }
+}
+
+function restoreCurrentSelection() {
+  if (!savedSelection) return false;
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(savedSelection);
+  return true;
+}
+
+function applySelectionCommand(command, value = null) {
+  if (!restoreCurrentSelection()) return;
+  bodyInput.focus();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand(command, false, value);
+  saveCurrentSelection();
+  queueAutoSave();
+}
 
 function loadNote() {
   if (isNewNote) {
     titleInput.value = '';
-    bodyInput.value = '';
+    bodyInput.innerHTML = '';
     applyTheme('cream');
     applyFontSize(16);
     return;
@@ -33,12 +72,14 @@ function loadNote() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     titleInput.value = typeof stored.title === 'string' ? stored.title : '';
-    bodyInput.value = typeof stored.body === 'string' ? stored.body : '';
+    bodyInput.innerHTML = typeof stored.bodyHtml === 'string'
+      ? stored.bodyHtml
+      : escapeHtml(typeof stored.body === 'string' ? stored.body : '');
     applyTheme(stored.theme);
     applyFontSize(stored.fontSize);
   } catch {
     titleInput.value = '';
-    bodyInput.value = '';
+    bodyInput.innerHTML = '';
     applyTheme('cream');
     applyFontSize(16);
   }
@@ -47,7 +88,8 @@ function loadNote() {
 function saveNote() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     title: titleInput.value,
-    body: bodyInput.value,
+    body: bodyInput.innerText,
+    bodyHtml: bodyInput.innerHTML,
     theme: positShell.dataset.theme,
     fontSize: Number(fontSizeRange.value)
   }));
@@ -87,7 +129,7 @@ async function saveToActiveFile() {
     await window.positWindow.saveNoteToPath({
       filePath: activeFilePath,
       title: titleInput.value,
-      body: bodyInput.value
+      body: bodyInput.innerText
     });
     saveLabel.textContent = 'Guardado';
   } catch {
@@ -112,6 +154,7 @@ function updatePinState(isActive) {
 
 titleInput.addEventListener('input', queueAutoSave);
 bodyInput.addEventListener('input', queueAutoSave);
+document.addEventListener('selectionchange', saveCurrentSelection);
 
 pinToggle.addEventListener('click', async () => {
   const isActive = pinToggle.classList.contains('is-active');
@@ -137,6 +180,18 @@ fontMenu.addEventListener('pointerdown', (event) => event.stopPropagation());
 fontSizeRange.addEventListener('input', () => {
   applyFontSize(fontSizeRange.value);
   queueAutoSave();
+});
+
+formatButtons.forEach((button) => {
+  button.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    applySelectionCommand(button.dataset.command);
+  });
+});
+
+selectionSize.addEventListener('change', () => {
+  if (selectionSize.value) applySelectionCommand('fontSize', selectionSize.value);
+  selectionSize.value = '';
 });
 
 document.addEventListener('pointerdown', (event) => {
@@ -167,7 +222,7 @@ saveButton.addEventListener('click', async () => {
   try {
     const result = await window.positWindow.saveNoteToFile({
       title: titleInput.value,
-      body: bodyInput.value,
+      body: bodyInput.innerText,
       theme: positShell.dataset.theme
     });
 
@@ -197,7 +252,7 @@ openButton.addEventListener('click', async () => {
     } else {
       activeFilePath = result.filePath;
       titleInput.value = result.title;
-      bodyInput.value = result.body;
+      bodyInput.innerHTML = escapeHtml(result.body);
       saveNote();
       saveLabel.textContent = 'Guardado';
     }

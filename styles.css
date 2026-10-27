@@ -215,7 +215,7 @@ textarea {
   z-index: 40;
   top: 58px;
   right: 15px;
-  width: 190px;
+  width: 220px;
   padding: 13px 14px 11px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -270,6 +270,69 @@ textarea {
 
 .font-size-hints span:nth-child(3) {
   font-size: 17px;
+}
+
+.selection-tools {
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+}
+
+.selection-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.format-button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.format-button:hover,
+.format-button:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--paper-soft);
+  outline: 0;
+}
+
+.format-italic {
+  font-family: Georgia, serif;
+}
+
+.format-list {
+  padding-bottom: 3px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.selection-size {
+  height: 27px;
+  min-width: 93px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
 }
 
 .new-posit-action {
@@ -347,9 +410,34 @@ textarea {
   font-size: calc(var(--note-scale) * var(--note-font-size));
   font-weight: 500;
   line-height: 1.8;
+  overflow-y: auto;
+  white-space: pre-wrap;
   scrollbar-color: #dbd1c2 transparent;
   scrollbar-width: thin;
 }
+
+.note-body:empty::before {
+  color: #c7c0b5;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.note-body:focus {
+  outline: 0;
+}
+
+.note-body ul {
+  margin: 0.25em 0;
+  padding-left: 1.35em;
+}
+
+.note-body font[size="1"] { font-size: 0.7em; }
+.note-body font[size="2"] { font-size: 0.85em; }
+.note-body font[size="3"] { font-size: 1em; }
+.note-body font[size="4"] { font-size: 1.15em; }
+.note-body font[size="5"] { font-size: 1.35em; }
+.note-body font[size="6"] { font-size: 1.6em; }
+.note-body font[size="7"] { font-size: 1.9em; }
 
 .note-body::-webkit-scrollbar {
   width: 5px;
