@@ -1,10 +1,12 @@
 const { app, BrowserWindow, dialog, ipcMain, screen } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
 const positWindows = new Set();
 let mainWindow = null;
 let nextWindowId = 1;
+let updateCheckStarted = false;
 
 function getWindowFromEvent(event) {
   return BrowserWindow.fromWebContents(event.sender) || mainWindow;
@@ -71,7 +73,59 @@ function createWindow({ newNote = false } = {}) {
   return positWindow;
 }
 
-app.whenReady().then(() => createWindow());
+function configureAutoUpdates() {
+  if (!app.isPackaged || updateCheckStarted) return;
+  updateCheckStarted = true;
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', async (updateInfo) => {
+    const response = await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Actualización disponible',
+      message: `Posit ${updateInfo.version} está disponible.`,
+      detail: 'Puedes descargarla ahora y se instalará al cerrar Posit.',
+      buttons: ['Descargar ahora', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1
+    });
+
+    if (response.response === 0) {
+      autoUpdater.downloadUpdate().catch((error) => {
+        console.warn('No se pudo descargar la actualización:', error.message);
+      });
+    }
+  });
+
+  autoUpdater.on('update-downloaded', async (updateInfo) => {
+    const response = await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Actualización lista',
+      message: `Posit ${updateInfo.version} se descargó correctamente.`,
+      detail: 'Selecciona instalar para cerrar Posit e instalar la actualización ahora.',
+      buttons: ['Instalar y reiniciar', 'Instalar al cerrar'],
+      defaultId: 0,
+      cancelId: 1
+    });
+
+    if (response.response === 0) {
+      autoUpdater.quitAndInstall(false, true);
+    }
+  });
+
+  autoUpdater.on('error', (error) => {
+    console.warn('No se pudo comprobar una actualización:', error.message);
+  });
+
+  autoUpdater.checkForUpdates().catch((error) => {
+    console.warn('No se pudo iniciar la comprobación de actualizaciones:', error.message);
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  configureAutoUpdates();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

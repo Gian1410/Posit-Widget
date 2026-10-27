@@ -537,13 +537,9 @@ textarea {
 .highlight-peach { background: #f4dfd1; }
 
 .note-body .hand-highlight {
-  padding: 0.06em 0.13em 0.1em;
-  margin: 0 -0.03em;
-  border-radius: 35% 12% 28% 16%;
-  background-image:
-    linear-gradient(176deg, transparent 4%, rgba(255, 255, 255, 0.22) 12%, transparent 22%, rgba(255, 255, 255, 0.12) 73%, transparent 93%),
-    repeating-linear-gradient(92deg, transparent 0 7px, rgba(255, 255, 255, 0.14) 8px 9px, transparent 10px 15px);
-  clip-path: polygon(0 17%, 4% 8%, 14% 12%, 25% 5%, 38% 10%, 53% 6%, 67% 12%, 79% 7%, 91% 13%, 100% 9%, 99% 85%, 91% 93%, 80% 89%, 68% 96%, 54% 90%, 40% 95%, 27% 90%, 14% 96%, 3% 89%);
+  padding: 0.04em 0.12em;
+  margin: 0 -0.02em;
+  border-radius: 8px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }

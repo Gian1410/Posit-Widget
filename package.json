@@ -1,6 +1,6 @@
 {
   "name": "posit-widget",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Widget de notas minimalista para Windows.",
   "main": "main.js",
   "author": "Proyecto Posit",
@@ -48,6 +48,17 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Posit"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Gian1410",
+        "repo": "Proyect-Posit",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }
