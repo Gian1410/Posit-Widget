@@ -12,10 +12,8 @@ function getWindowFromEvent(event) {
 
 async function writeNoteFile(filePath, payload = {}) {
   const normalizedPath = filePath.toLowerCase().endsWith('.txt') ? filePath : `${filePath}.txt`;
-  const title = String(payload.title || '').trim();
   const body = String(payload.body || '');
-  const contents = `${title ? `${title}\n\n` : ''}${body}`;
-  await fs.writeFile(normalizedPath, contents, 'utf8');
+  await fs.writeFile(normalizedPath, body, 'utf8');
   return normalizedPath;
 }
 
@@ -177,16 +175,10 @@ ipcMain.handle('note:open-from-file', async (event) => {
   const filePath = result.filePaths[0];
   const contents = await fs.readFile(filePath, 'utf8');
   const cleanContents = contents.replace(/^\uFEFF/, '');
-  const lines = cleanContents.split(/\r?\n/);
-  const hasPositTitle = lines.length > 1 && lines[1].trim() === '';
-  const title = hasPositTitle ? lines[0].trim() : '';
-  const body = hasPositTitle ? lines.slice(2).join('\n') : cleanContents;
-
   return {
     canceled: false,
     filePath,
     fileName: path.basename(filePath),
-    title,
-    body
+    body: cleanContents
   };
 });

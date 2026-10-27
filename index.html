@@ -34,19 +34,32 @@
         </div>
         <input id="font-size-range" class="font-size-range" type="range" min="8" max="24" step="1" value="16" aria-label="Tamaño de fuente" />
         <div class="font-size-hints" aria-hidden="true"><span>A</span><span>A</span><span>A</span></div>
+        <div class="font-family-tools">
+          <span class="selection-label">Tipografía de la nota</span>
+          <div class="font-family-options" role="group" aria-label="Elegir tipografía">
+            <button class="font-family-button" type="button" data-font-family="handwritten">Original</button>
+            <button class="font-family-button" type="button" data-font-family="arial">Arial</button>
+            <button class="font-family-button" type="button" data-font-family="aptos">Aptos</button>
+          </div>
+        </div>
         <div class="selection-tools">
           <span class="selection-label">Texto seleccionado</span>
           <div class="selection-actions">
             <button class="format-button format-bold" type="button" data-command="bold" title="Negrita"><strong>B</strong></button>
             <button class="format-button format-italic" type="button" data-command="italic" title="Cursiva"><em>I</em></button>
             <button class="format-button format-list" type="button" data-command="insertUnorderedList" title="Viñetas">•</button>
-            <select id="selection-size" class="selection-size" aria-label="Tamaño del texto seleccionado" title="Tamaño del texto seleccionado">
-              <option value="">Tamaño</option>
-              <option value="2">Pequeño</option>
-              <option value="3">Normal</option>
-              <option value="5">Grande</option>
-              <option value="6">Muy grande</option>
-            </select>
+            <div class="selection-size-picker">
+              <button id="selection-size-toggle" class="selection-size" type="button" aria-expanded="false" aria-controls="selection-size-menu" title="Tamaño del texto seleccionado">
+                <span>Tamaño</span>
+                <span class="select-chevron" aria-hidden="true"></span>
+              </button>
+              <div id="selection-size-menu" class="selection-size-menu" hidden>
+                <button type="button" data-size="2">Pequeño</button>
+                <button type="button" data-size="3">Normal</button>
+                <button type="button" data-size="5">Grande</button>
+                <button type="button" data-size="6">Muy grande</button>
+              </div>
+            </div>
           </div>
         </div>
         <button id="new-posit" class="new-posit-action" type="button">
@@ -56,9 +69,30 @@
       </div>
 
       <section class="note-content">
-        <input id="note-title" class="note-title" type="text" maxlength="60" placeholder="Título de la nota" aria-label="Título de la nota" />
-        <div id="note-body" class="note-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribe algo para no olvidarlo..." aria-label="Contenido de la nota"></div>
+        <div id="note-body" class="note-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribe algo para no olvidarlo..." aria-label="Nota"></div>
       </section>
+
+      <div id="highlight-menu" class="highlight-menu" hidden role="menu" aria-label="Resaltar texto">
+        <button id="increase-selection-size" class="context-format-action" type="button" role="menuitem">
+          <span class="context-format-icon" aria-hidden="true">A+</span>
+          <span>Aumentar tamaño</span>
+        </button>
+        <button id="decrease-selection-size" class="context-format-action" type="button" role="menuitem">
+          <span class="context-format-icon context-format-icon-small" aria-hidden="true">A−</span>
+          <span>Reducir tamaño</span>
+        </button>
+        <button id="remove-highlight" class="context-format-action" type="button" role="menuitem">
+          <span class="context-format-icon context-format-icon-remove" aria-hidden="true">×</span>
+          <span>Quitar resaltado</span>
+        </button>
+        <div class="context-menu-divider"></div>
+        <span>Resaltar</span>
+        <div class="highlight-actions" role="group" aria-label="Color de resaltado">
+          <button class="highlight-swatch highlight-cream" type="button" data-highlight="#f2e7bb" title="Resaltado crema" aria-label="Resaltado crema"></button>
+          <button class="highlight-swatch highlight-lavender" type="button" data-highlight="#e4dcf1" title="Resaltado lavanda" aria-label="Resaltado lavanda"></button>
+          <button class="highlight-swatch highlight-peach" type="button" data-highlight="#f4dfd1" title="Resaltado durazno" aria-label="Resaltado durazno"></button>
+        </div>
+      </div>
 
       <footer class="note-footer">
         <div class="footer-left">

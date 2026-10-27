@@ -1,4 +1,3 @@
-const titleInput = document.querySelector('#note-title');
 const bodyInput = document.querySelector('#note-body');
 const saveLabel = document.querySelector('#save-label');
 const pinToggle = document.querySelector('#pin-toggle');
@@ -9,8 +8,16 @@ const fontMenu = document.querySelector('#font-menu');
 const newPositButton = document.querySelector('#new-posit');
 const fontSizeRange = document.querySelector('#font-size-range');
 const fontSizeValue = document.querySelector('#font-size-value');
+const fontFamilyButtons = document.querySelectorAll('.font-family-button');
 const formatButtons = document.querySelectorAll('.format-button');
-const selectionSize = document.querySelector('#selection-size');
+const selectionSizeToggle = document.querySelector('#selection-size-toggle');
+const selectionSizeMenu = document.querySelector('#selection-size-menu');
+const selectionSizeButtons = document.querySelectorAll('#selection-size-menu button');
+const highlightMenu = document.querySelector('#highlight-menu');
+const increaseSelectionSizeButton = document.querySelector('#increase-selection-size');
+const decreaseSelectionSizeButton = document.querySelector('#decrease-selection-size');
+const removeHighlightButton = document.querySelector('#remove-highlight');
+const highlightButtons = document.querySelectorAll('.highlight-swatch');
 const positShell = document.querySelector('.posit-shell');
 const themeButtons = document.querySelectorAll('.theme-dot');
 const resizeHandles = document.querySelectorAll('.resize-handle');
@@ -23,6 +30,7 @@ const STORAGE_KEY = `posit-note-v1-${noteWindowId}`;
 let activeFilePath = null;
 let autoSaveTimer = null;
 let savedSelection = null;
+let windowTextScale = 1;
 
 function escapeHtml(value) {
   return String(value)
@@ -34,12 +42,49 @@ function escapeHtml(value) {
     .replace(/\r?\n/g, '<br>');
 }
 
+function getPlainNoteText() {
+  return bodyInput.innerText.replace(/\u200B/g, '');
+}
+
+function addHighlightCaretGuard(highlight) {
+  const nextSibling = highlight.nextSibling;
+  if (nextSibling?.nodeType === Node.ELEMENT_NODE && nextSibling.classList.contains('highlight-caret-guard')) {
+    return nextSibling;
+  }
+
+  const caretGuard = document.createElement('span');
+  caretGuard.className = 'highlight-caret-guard';
+  caretGuard.textContent = '\u200B';
+  highlight.after(caretGuard);
+  return caretGuard;
+}
+
+function ensureHighlightCaretGuards() {
+  bodyInput.querySelectorAll('.hand-highlight').forEach((highlight) => {
+    if (!highlight.dataset.highlightColor) {
+      highlight.dataset.highlightColor = normalizeColor(getComputedStyle(highlight).backgroundColor);
+    }
+    addHighlightCaretGuard(highlight);
+  });
+}
+
+function normalizeColor(color) {
+  const colorSample = document.createElement('span');
+  colorSample.style.backgroundColor = color;
+  return colorSample.style.backgroundColor.replace(/\s/g, '').toLowerCase();
+}
+
 function saveCurrentSelection() {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    savedSelection = null;
+    return;
+  }
   const range = selection.getRangeAt(0);
   if (bodyInput.contains(range.commonAncestorContainer)) {
     savedSelection = range.cloneRange();
+  } else {
+    savedSelection = null;
   }
 }
 
@@ -60,38 +105,132 @@ function applySelectionCommand(command, value = null) {
   queueAutoSave();
 }
 
+function applySelectionFontSize(size) {
+  if (!restoreCurrentSelection()) {
+    const fontSizeMap = { 2: 12, 3: 16, 5: 20, 6: 24 };
+    applyFontSize(fontSizeMap[size] || 16);
+    queueAutoSave();
+    return;
+  }
+
+  bodyInput.focus();
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand('fontSize', false, size);
+  saveCurrentSelection();
+  queueAutoSave();
+}
+
+function applyHighlight(color) {
+  if (!restoreCurrentSelection()) return;
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+
+  const range = selection.getRangeAt(0);
+  const highlight = document.createElement('span');
+  highlight.className = 'hand-highlight';
+  highlight.style.backgroundColor = color;
+  highlight.dataset.highlightColor = color;
+
+  try {
+    range.surroundContents(highlight);
+  } catch {
+    const contents = range.extractContents();
+    highlight.append(contents);
+    range.insertNode(highlight);
+  }
+
+  const caretGuard = addHighlightCaretGuard(highlight);
+
+  const caretRange = document.createRange();
+  caretRange.setStart(caretGuard.firstChild, 1);
+  caretRange.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caretRange);
+  savedSelection = null;
+  bodyInput.focus();
+  queueAutoSave();
+}
+
+function removeHighlight(highlight) {
+  const caretGuard = highlight.nextSibling?.classList?.contains('highlight-caret-guard')
+    ? highlight.nextSibling
+    : null;
+  highlight.replaceWith(...highlight.childNodes);
+  caretGuard?.remove();
+}
+
+function removeHighlightsFromSelection() {
+  if (!restoreCurrentSelection()) return;
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+
+  const range = selection.getRangeAt(0);
+  const highlights = [...bodyInput.querySelectorAll('.hand-highlight')]
+    .filter((highlight) => range.intersectsNode(highlight));
+
+  highlights.forEach(removeHighlight);
+  if (highlights.length === 0) return;
+
+  savedSelection = null;
+  bodyInput.focus();
+  queueAutoSave();
+}
+
+function moveCaretOutOfHighlight() {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || !selection.isCollapsed) return;
+
+  const anchorNode = selection.anchorNode;
+  const anchorElement = anchorNode?.nodeType === Node.ELEMENT_NODE ? anchorNode : anchorNode?.parentElement;
+  const highlight = anchorElement?.closest('.hand-highlight');
+  if (!highlight || !bodyInput.contains(highlight)) return;
+
+  const caretRange = document.createRange();
+  caretRange.setStartAfter(highlight);
+  caretRange.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caretRange);
+}
+
 function loadNote() {
   if (isNewNote) {
-    titleInput.value = '';
     bodyInput.innerHTML = '';
     applyTheme('cream');
     applyFontSize(16);
+    applyFontFamily('handwritten');
     return;
   }
 
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    titleInput.value = typeof stored.title === 'string' ? stored.title : '';
-    bodyInput.innerHTML = typeof stored.bodyHtml === 'string'
+    const storedBody = typeof stored.bodyHtml === 'string'
       ? stored.bodyHtml
       : escapeHtml(typeof stored.body === 'string' ? stored.body : '');
+    const legacyTitle = typeof stored.title === 'string' ? stored.title.trim() : '';
+    bodyInput.innerHTML = legacyTitle
+      ? `${escapeHtml(legacyTitle)}${storedBody ? '<br><br>' : ''}${storedBody}`
+      : storedBody;
+    ensureHighlightCaretGuards();
     applyTheme(stored.theme);
     applyFontSize(stored.fontSize);
+    applyFontFamily(stored.fontFamily);
   } catch {
-    titleInput.value = '';
     bodyInput.innerHTML = '';
     applyTheme('cream');
     applyFontSize(16);
+    applyFontFamily('handwritten');
   }
 }
 
 function saveNote() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    title: titleInput.value,
-    body: bodyInput.innerText,
+    body: getPlainNoteText(),
     bodyHtml: bodyInput.innerHTML,
     theme: positShell.dataset.theme,
-    fontSize: Number(fontSizeRange.value)
+    fontSize: Number(fontSizeRange.value),
+    fontFamily: document.documentElement.dataset.noteFontFamily || 'handwritten'
   }));
   saveLabel.textContent = 'Guardado';
 }
@@ -108,18 +247,40 @@ function applyTheme(theme = 'cream') {
 
 function applyFontSize(size = 16) {
   const nextSize = Math.max(8, Math.min(24, Number(size) || 16));
-  const titleSize = nextSize * 1.75;
   document.documentElement.style.setProperty('--note-font-size', `${nextSize}px`);
-  document.documentElement.style.setProperty('--note-title-font-size', `${titleSize}px`);
+  document.documentElement.style.setProperty('--note-font-zoom', (nextSize / 16).toFixed(3));
+  applyContentZoom(nextSize);
   fontSizeRange.value = String(nextSize);
   fontSizeValue.textContent = `${nextSize} px`;
+}
+
+function applyContentZoom(fontSize = Number(fontSizeRange.value) || 16) {
+  bodyInput.style.zoom = ((fontSize / 16) * windowTextScale).toFixed(3);
+}
+
+function applyFontFamily(fontFamily = 'handwritten') {
+  const fontFamilies = {
+    handwritten: '"Segoe Print", "Bradley Hand", "Comic Sans MS", cursive',
+    arial: 'Arial, sans-serif',
+    aptos: 'Aptos, "Segoe UI", sans-serif'
+  };
+  const nextFontFamily = Object.hasOwn(fontFamilies, fontFamily) ? fontFamily : 'handwritten';
+  document.documentElement.style.setProperty('--note-font-family', fontFamilies[nextFontFamily]);
+  document.documentElement.dataset.noteFontFamily = nextFontFamily;
+  fontFamilyButtons.forEach((button) => {
+    const isSelected = button.dataset.fontFamily === nextFontFamily;
+    button.classList.toggle('is-selected', isSelected);
+    button.setAttribute('aria-pressed', String(isSelected));
+  });
 }
 
 function updateTextScale() {
   const widthScale = window.innerWidth / 380;
   const heightScale = window.innerHeight / 470;
   const scale = Math.max(0.82, Math.min(1.55, widthScale * 0.72 + heightScale * 0.28));
+  windowTextScale = scale;
   document.documentElement.style.setProperty('--note-scale', scale.toFixed(3));
+  applyContentZoom();
 }
 
 async function saveToActiveFile() {
@@ -128,8 +289,7 @@ async function saveToActiveFile() {
   try {
     await window.positWindow.saveNoteToPath({
       filePath: activeFilePath,
-      title: titleInput.value,
-      body: bodyInput.innerText
+      body: getPlainNoteText()
     });
     saveLabel.textContent = 'Guardado';
   } catch {
@@ -152,8 +312,12 @@ function updatePinState(isActive) {
   pinToggle.title = isActive ? 'Desactivar siempre arriba' : 'Activar siempre arriba';
 }
 
-titleInput.addEventListener('input', queueAutoSave);
 bodyInput.addEventListener('input', queueAutoSave);
+bodyInput.addEventListener('beforeinput', (event) => {
+  if (event.inputType === 'insertText' || event.inputType === 'insertParagraph' || event.inputType === 'insertLineBreak') {
+    moveCaretOutOfHighlight();
+  }
+});
 document.addEventListener('selectionchange', saveCurrentSelection);
 
 pinToggle.addEventListener('click', async () => {
@@ -182,6 +346,13 @@ fontSizeRange.addEventListener('input', () => {
   queueAutoSave();
 });
 
+fontFamilyButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    applyFontFamily(button.dataset.fontFamily);
+    queueAutoSave();
+  });
+});
+
 formatButtons.forEach((button) => {
   button.addEventListener('mousedown', (event) => {
     event.preventDefault();
@@ -189,9 +360,61 @@ formatButtons.forEach((button) => {
   });
 });
 
-selectionSize.addEventListener('change', () => {
-  if (selectionSize.value) applySelectionCommand('fontSize', selectionSize.value);
-  selectionSize.value = '';
+selectionSizeToggle.addEventListener('mousedown', (event) => {
+  event.preventDefault();
+  const isOpen = !selectionSizeMenu.hidden;
+  selectionSizeMenu.hidden = isOpen;
+  selectionSizeToggle.setAttribute('aria-expanded', String(!isOpen));
+});
+
+selectionSizeButtons.forEach((button) => {
+  button.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    applySelectionFontSize(button.dataset.size);
+    selectionSizeMenu.hidden = true;
+    selectionSizeToggle.setAttribute('aria-expanded', 'false');
+  });
+});
+
+highlightButtons.forEach((button) => {
+  button.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    applyHighlight(button.dataset.highlight);
+    highlightMenu.hidden = true;
+  });
+});
+
+increaseSelectionSizeButton.addEventListener('mousedown', (event) => {
+  event.preventDefault();
+  applySelectionCommand('fontSize', '6');
+  highlightMenu.hidden = true;
+});
+
+decreaseSelectionSizeButton.addEventListener('mousedown', (event) => {
+  event.preventDefault();
+  applySelectionCommand('fontSize', '2');
+  highlightMenu.hidden = true;
+});
+
+removeHighlightButton.addEventListener('mousedown', (event) => {
+  event.preventDefault();
+  removeHighlightsFromSelection();
+  highlightMenu.hidden = true;
+});
+
+bodyInput.addEventListener('contextmenu', (event) => {
+  saveCurrentSelection();
+  if (!savedSelection) return;
+
+  event.preventDefault();
+  const shellBounds = positShell.getBoundingClientRect();
+  const menuWidth = 134;
+  const menuHeight = 154;
+  const left = Math.max(8, Math.min(event.clientX - shellBounds.left, shellBounds.width - menuWidth - 8));
+  const top = Math.max(8, Math.min(event.clientY - shellBounds.top, shellBounds.height - menuHeight - 8));
+  highlightMenu.style.left = `${left}px`;
+  highlightMenu.style.top = `${top}px`;
+  highlightMenu.hidden = false;
 });
 
 document.addEventListener('pointerdown', (event) => {
@@ -199,12 +422,24 @@ document.addEventListener('pointerdown', (event) => {
     fontMenu.hidden = true;
     moreActions.setAttribute('aria-expanded', 'false');
   }
+
+  if (!selectionSizeMenu.hidden && !selectionSizeMenu.contains(event.target) && !selectionSizeToggle.contains(event.target)) {
+    selectionSizeMenu.hidden = true;
+    selectionSizeToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  if (!highlightMenu.hidden && !highlightMenu.contains(event.target)) {
+    highlightMenu.hidden = true;
+  }
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     fontMenu.hidden = true;
     moreActions.setAttribute('aria-expanded', 'false');
+    selectionSizeMenu.hidden = true;
+    selectionSizeToggle.setAttribute('aria-expanded', 'false');
+    highlightMenu.hidden = true;
   }
 });
 
@@ -221,8 +456,7 @@ saveButton.addEventListener('click', async () => {
 
   try {
     const result = await window.positWindow.saveNoteToFile({
-      title: titleInput.value,
-      body: bodyInput.innerText,
+      body: getPlainNoteText(),
       theme: positShell.dataset.theme
     });
 
@@ -251,7 +485,6 @@ openButton.addEventListener('click', async () => {
       saveLabel.textContent = 'Guardado';
     } else {
       activeFilePath = result.filePath;
-      titleInput.value = result.title;
       bodyInput.innerHTML = escapeHtml(result.body);
       saveNote();
       saveLabel.textContent = 'Guardado';
