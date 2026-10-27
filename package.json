@@ -1,6 +1,6 @@
 {
   "name": "posit-widget",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Widget de notas minimalista para Windows.",
   "main": "main.js",
   "author": "Proyecto Posit",
